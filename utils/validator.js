@@ -17,4 +17,12 @@ const studentSignUpValidator = Joi.object({
   password: Joi.string().required(),
 });
 
-module.exports = { driverSignUPValidator, studentSignUpValidator };
+const logInValidator = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().required(),
+});
+module.exports = {
+  driverSignUPValidator,
+  studentSignUpValidator,
+  logInValidator,
+};

@@ -1,10 +1,12 @@
 const models = require("../models/index");
 const Driver = models.driverModel;
 const utils = require("../utils");
+const fs = require("fs");
 const { hashPassword, comparePassword } = utils.hash;
 const { generateToken } = utils.jwt;
-const { driverSignUPValidator } = utils.validator;
+const { driverSignUPValidator, logInValidator } = utils.validator;
 const { sendSignUpEmail } = utils.nodemailer;
+const { cloudinaryUploadImage } = utils.cloudinary;
 
 //signup
 const driverSignUp = async (req, res) => {
@@ -29,6 +31,9 @@ const driverSignUp = async (req, res) => {
     const token = generateToken(value);
 
     const newDriver = await Driver.create(value);
+    if (!newDriver) {
+      return res.status(400).json({ error: "Sign up failed" });
+    }
     sendSignUpEmail(email);
 
     //respond to the front-end with these details
@@ -51,9 +56,91 @@ const driverSignUp = async (req, res) => {
 };
 
 //login
+const driverLogIn = async (req, res) => {
+  try {
+    const { error, value } = logInValidator.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: "Invalid Request" });
+    }
+
+    const { email, password } = value;
+
+    const driver = await Driver.findOne({ email });
+
+    if (!driver) {
+      return res.status(401).json({ error: "Invalid Credentials" });
+    }
+
+    const isPasswordValid = await comparePassword(password, driver.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "Invalid Credentials" });
+    }
+
+    const token = generateToken(value);
+
+    res.status(200).json({
+      DriverDetails: {
+        id: driver._id,
+        firstname: driver.first_name,
+        lastname: driver.last_name,
+        email: driver.email,
+        car_type: driver.car_type,
+        max_passengers: driver.max_passengers,
+        phone_number: driver.phone_number,
+      },
+      token: token,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Internal Server Error" });
+    console.log(err.message);
+  }
+};
+
+//get verified
+const uploadLicense = async (req, res) => {
+  try {
+    const { email } = req.user;
+    const { path } = req.file;
+    const { url } = await cloudinaryUploadImage(path, "images");
+    if (!url) {
+      return res.status(400).json({ error: "Failed to upload image" });
+    }
+    fs.unlinkSync(path);
+    const updateLink = await Driver.findOneAndUpdate(
+      { email: email },
+      { driver_license: url, verificationStatus: "awaitingVerification" },
+      { new: true }
+    );
+    if (!updateLink) {
+      return res.status(400).json({ error: "Failed to upload image" });
+    }
+    res.status(200).json({ message: "Image uploaded successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+    console.log(error.message);
+  }
+};
+
+//check verification status
+const checkVerificationStatus = async (req, res) => {
+  try {
+    const { email } = req.user;
+    const driver = await Driver.findOne({ email });
+    res.status(200).json({ verificationStatus: driver.verificationStatus });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+    console.log(error.message);
+  }
+};
 
 //allow-location-tracking
 
 //get-user-details
 
-module.exports = { driverSignUp };
+module.exports = {
+  driverSignUp,
+  driverLogIn,
+  uploadLicense,
+  checkVerificationStatus,
+};

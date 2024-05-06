@@ -31,12 +31,16 @@ const driverSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  isVerified: {
-    type: Boolean,
-    default: false,
+  verificationStatus: {
+    type: String,
+    enum: ["Verified", "Unverified", "Awaiting Verification"],
+    default: "Unverified",
   },
   current_passengers: {
     type: Number,
+  },
+  driver_license: {
+    type: String,
   },
   current_location_id: {
     type: mongoose.Schema.Types.ObjectId, // Referencing the 'Location' model

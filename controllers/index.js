@@ -1,7 +1,7 @@
 const driverController = require("./driverController");
-const studenController = require("./studentController");
+const studentController = require("./studentController");
 
 module.exports = {
   driverController,
-  studenController,
+  studentController,
 };
