@@ -16,7 +16,7 @@ const driverSchema = new mongoose.Schema({
   },
   car_type: {
     type: String,
-    enum: ["maruwa", "car", "bus"],
+    enum: ["tricycle", "car", "bus"],
     required: true,
   },
   password: {
@@ -38,16 +38,27 @@ const driverSchema = new mongoose.Schema({
   },
   current_passengers: {
     type: Number,
+    default: 0,
   },
   driver_license: {
     type: String,
+    default: "",
   },
-  current_location_id: {
-    type: mongoose.Schema.Types.ObjectId, // Referencing the 'Location' model
-    ref: "Location", // Referencing the 'Location' model
+  location: {
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point",
+    },
+    coordinates: {
+      type: [Number],
+      default: [0, 0], // Default coordinates (longitude, latitude)
+    },
   },
 });
 
-const drivers = mongoose.model("drivers", driverSchema);
+driverSchema.index({ location: "2dsphere" });
 
-module.exports = drivers;
+const Driver = mongoose.model("Driver", driverSchema);
+
+module.exports = Driver;

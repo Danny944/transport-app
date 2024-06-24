@@ -1,9 +1,12 @@
+const { response } = require("express");
 const models = require("../models/index");
 const Student = models.studentModel;
+const Driver = models.driverModel;
 const utils = require("../utils");
 const { hashPassword, comparePassword } = utils.hash;
 const { generateToken } = utils.jwt;
-const { studentSignUpValidator, logInValidator } = utils.validator;
+const { studentSignUpValidator, logInValidator, locationValidator } =
+  utils.validator;
 const { sendSignUpEmail } = utils.nodemailer;
 
 //sign up
@@ -88,4 +91,41 @@ const studentLogin = async (req, res) => {
   }
 };
 
-module.exports = { studentSignUp, studentLogin };
+//Find Nearby Drivers
+const findDrivers = async (req, res) => {
+  try {
+    console.log(req.query);
+    const { error, value } = locationValidator.validate(req.query);
+    if (error) {
+      return res
+        .status(400)
+        .json({ error: "Something Went Wrong Invalid Coordinates" });
+    }
+
+    const { latitude, longitude } = value;
+
+    const nearestDrivers = await Driver.find({
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [longitude, latitude],
+          },
+          $maxDistance: 1000, // 1000 meters
+        },
+      },
+      verificationStatus: "Verified",
+    }).select("-password -driver_license -__v");
+
+    if (nearestDrivers.length === 0) {
+      res.status(200).json({ response: "No drivers nearby" });
+    }
+
+    res.status(200).json({ nearestDrivers });
+  } catch (err) {
+    res.status(500).json({ error: "Internal Server Error" });
+    console.log(err.message);
+  }
+};
+
+module.exports = { studentSignUp, studentLogin, findDrivers };

@@ -18,9 +18,10 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  current_location_id: {
-    type: mongoose.Schema.Types.ObjectId, // Referencing the 'Location' model
-    ref: "Location", // Referencing the 'Location' model
+  location: {
+    type: String,
+    enum: ["Point"],
+    coordinates: [Number],
   },
 });
 

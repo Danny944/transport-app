@@ -8,5 +8,10 @@ const router = express.Router();
 
 router.post("/student/sign-up", studentController.studentSignUp);
 router.post("/student/log-in", studentController.studentLogin);
+router.get(
+  "/student/find-drivers",
+  authMiddleware,
+  studentController.findDrivers
+);
 
 module.exports = router;

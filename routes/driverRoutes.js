@@ -21,5 +21,10 @@ router.get(
   authMiddleware,
   driverController.checkVerificationStatus
 );
+router.put(
+  "/driver/allow-location-tracking",
+  authMiddleware,
+  driverController.allowLocationTracking
+);
 
 module.exports = router;

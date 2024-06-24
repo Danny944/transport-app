@@ -5,7 +5,7 @@ const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (!token) {
-    res.status(403).json({ error: "UNAUTHORIZED" });
+    return res.status(403).json({ error: "UNAUTHORIZED" });
   }
   try {
     const decoded = verifyToken(token);

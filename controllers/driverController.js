@@ -4,7 +4,8 @@ const utils = require("../utils");
 const fs = require("fs");
 const { hashPassword, comparePassword } = utils.hash;
 const { generateToken } = utils.jwt;
-const { driverSignUPValidator, logInValidator } = utils.validator;
+const { driverSignUPValidator, logInValidator, locationValidator } =
+  utils.validator;
 const { sendSignUpEmail } = utils.nodemailer;
 const { cloudinaryUploadImage } = utils.cloudinary;
 
@@ -134,7 +135,34 @@ const checkVerificationStatus = async (req, res) => {
   }
 };
 
-//allow-location-tracking
+//allow-location-tracking and populate location
+const allowLocationTracking = async (req, res) => {
+  try {
+    const { error, value } = locationValidator.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: "Invalid Request" });
+    }
+    const { longitude, latitude } = value;
+    const { email } = req.user;
+    const driver = await Driver.findOneAndUpdate(
+      { email },
+      { location: { type: "Point", coordinates: [longitude, latitude] } },
+      { new: true }
+    );
+
+    if (!driver) {
+      return res
+        .status(400)
+        .json({ error: "An error occured updating location" });
+    }
+    res
+      .status(200)
+      .json({ message: " Location Update successful you are ready to go!" });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+    console.log(error.message);
+  }
+};
 
 //get-user-details
 
@@ -143,4 +171,5 @@ module.exports = {
   driverLogIn,
   uploadLicense,
   checkVerificationStatus,
+  allowLocationTracking,
 };

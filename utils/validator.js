@@ -21,8 +21,15 @@ const logInValidator = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
 });
+
+const locationValidator = Joi.object({
+  longitude: Joi.number().min(-180).max(180).required(),
+  latitude: Joi.number().min(-90).max(90).required(),
+});
+
 module.exports = {
   driverSignUPValidator,
   studentSignUpValidator,
   logInValidator,
+  locationValidator,
 };
